@@ -1,6 +1,0 @@
-allowBuilds:
-  '@clerk/shared': true
-  pnpm: true
-  unrs-resolver: true
-minimumReleaseAgeExclude:
-  - lucide-react@1.45.0
