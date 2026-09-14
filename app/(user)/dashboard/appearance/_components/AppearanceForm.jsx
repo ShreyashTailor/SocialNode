@@ -37,6 +37,18 @@ export const THEMES = [
   // Creative themes
   { id: "creator", label: "Creator", description: "Pink to red gradient", bg_gradient: "linear-gradient(135deg, #ff006e 0%, #f5576c 100%)", text_color: "#ffffff", link_color: "#ffffff", button_style: "filled", button_shape: "pill", font: "poppins" },
   { id: "monochrome", label: "Monochrome", description: "Grayscale elegant", bg_color: "#252525", text_color: "#e0e0e0", link_color: "#ffffff", button_style: "outlined", button_shape: "pill", font: "inter" },
+  
+  // Showcase-style themes (matching popular link-in-bio designs)
+  { id: "dark-linktree", label: "Dark Linktree", description: "Dark minimal with social row", bg_color: "#0a0a0a", text_color: "#ffffff", link_color: "#00d4ff", button_style: "filled", button_shape: "rounded", font: "inter" },
+  { id: "light-linkinbio", label: "Light Link-in-Bio", description: "Light with thumbnail grid", bg_color: "#fafafa", text_color: "#111111", link_color: "#0066cc", button_style: "outlined", button_shape: "rounded", font: "inter" },
+  { id: "yellow-flowlink", label: "Flowlink", description: "Yellow with outline buttons", bg_color: "#fef3c7", text_color: "#000000", link_color: "#000000", button_style: "outlined", button_shape: "rounded", font: "inter" },
+  { id: "pink-linktree", label: "Pink Linktree", description: "Pastel pink with arrows", bg_color: "#fce4ec", text_color: "#111111", link_color: "#ec407a", button_style: "filled", button_shape: "rounded", font: "inter" },
+  { id: "dark-3d", label: "3D Immersive", description: "Dark with 3D effects", bg_color: "#000000", text_color: "#ffffff", link_color: "#7c3aed", button_style: "filled", button_shape: "rounded", font: "inter" },
+  { id: "cream-linkinbio", label: "Cream Link-in-Bio", description: "Cream with orange CTA", bg_color: "#fdf6e3", text_color: "#111111", link_color: "#0066cc", button_style: "filled", button_shape: "rounded", font: "inter" },
+  { id: "minimal-pill", label: "Minimal Pills", description: "White with dark pill buttons", bg_color: "#ffffff", text_color: "#111111", link_color: "#000000", button_style: "solid", button_shape: "pill", font: "inter" },
+  { id: "light-logoheader", label: "Logo Header", description: "Light with logo area", bg_color: "#f9fafb", text_color: "#111111", link_color: "#0066cc", button_style: "outlined", button_shape: "rounded", font: "inter" },
+  { id: "dark-lorem", label: "Dark Portfolio", description: "Dark with projects section", bg_color: "#0a0a0a", text_color: "#ffffff", link_color: "#00d4ff", button_style: "filled", button_shape: "rounded", font: "inter" },
+  { id: "minim-links", label: "Minim Links", description: "Browser frame style", bg_color: "#ffffff", text_color: "#111111", link_color: "#0066cc", button_style: "filled", button_shape: "rounded", font: "inter" },
 ];
 
 const FONTS = [
