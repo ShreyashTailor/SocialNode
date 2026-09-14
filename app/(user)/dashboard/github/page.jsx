@@ -1,13 +1,11 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, getGithubCache } from "@/models/user";
+import { getGithubCache } from "@/models/user";
+import { getCurrentUserContext } from "@/lib/security";
 import GitHubForm from "./_components/GitHubForm";
 
 export const metadata = { title: "GitHub Integration" };
 
 export default async function GitHubPage() {
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-  const dbUser = email ? await findUser("email", email) : null;
+  const { dbUser } = await getCurrentUserContext();
   const githubCache = dbUser ? await getGithubCache(dbUser.id) : null;
 
   if (!dbUser) {

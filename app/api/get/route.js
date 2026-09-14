@@ -1,14 +1,13 @@
-import { findUser } from "@/models/user";
-import { currentUser } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
+import { getCurrentDbUser } from "@/lib/security";
 
 export async function GET() {
   try {
-    const { emailAddresses } = await currentUser();
-    const email = emailAddresses[0].emailAddress;
-    const data = await findUser("email", email);
-    return NextResponse.json({ data }, { status: 200 });
+    const data = await getCurrentDbUser();
+    if (!data) return Response.json({ data: null }, { status: 200 });
+    const { accessKey: _accessKey, ...safeData } = data;
+    return Response.json({ data: safeData }, { status: 200, headers: { "Cache-Control": "private, no-store" } });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Profile fetch error:", error);
+    return Response.json({ error: "Unable to load profile." }, { status: 500 });
   }
 }

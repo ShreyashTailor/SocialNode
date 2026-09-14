@@ -1,6 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server";
 import {
-  findUser,
   getAnalyticsSummary,
   getViewsOverTime,
   getClicksOverTime,
@@ -9,6 +7,7 @@ import {
   getDevices,
   getReferrers,
 } from "@/models/user";
+import { getCurrentUserContext } from "@/lib/security";
 import { Eye, MousePointerClick, Users, TrendingUp } from "lucide-react";
 
 function StatCard({ icon: Icon, label, value, sub }) {
@@ -44,9 +43,7 @@ function Table({ title, rows, columns }) {
 export const metadata = { title: "Analytics" };
 
 export default async function AnalyticsPage({ searchParams }) {
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-  const dbUser = email ? await findUser("email", email) : null;
+  const { dbUser } = await getCurrentUserContext();
 
   if (!dbUser) {
     return (

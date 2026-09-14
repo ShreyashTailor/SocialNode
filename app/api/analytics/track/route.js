@@ -1,77 +1,85 @@
-import { findUser, recordEvent } from "@/models/user";
-import { NextResponse } from "next/server";
+import { findUserByUsername, recordEvent } from "@/models/user";
+import { readJson, validateUsername } from "@/lib/security";
 import { headers } from "next/headers";
+import crypto from "node:crypto";
 
-async function generateVisitorId() {
-  const headersList = await headers();
-  const ip = headersList.get("x-forwarded-for")?.split(",")[0] || headersList.get("x-real-ip") || "unknown";
-  const ua = headersList.get("user-agent") || "unknown";
-  // Simple hash for visitor identification (not cryptographic, just deduplication)
-  const str = `${ip}-${ua}`;
-  let hash = 0;
-  for (let i = 0; i < str.length; i++) {
-    const char = str.charCodeAt(i);
-    hash = (hash << 5) - hash + char;
-    hash = hash & hash;
+// Best-effort per-instance limiter. Use an edge/distributed limiter (e.g. Redis)
+// if this endpoint becomes high traffic across many serverless instances.
+const rateMap = new Map();
+const WINDOW_MS = 60_000;
+const MAX_EVENTS = 30;
+
+function isRateLimited(key) {
+  const now = Date.now();
+  const entry = rateMap.get(key);
+  if (!entry || now - entry.start >= WINDOW_MS) {
+    rateMap.set(key, { start: now, count: 1 });
+    if (rateMap.size > 5000) rateMap.delete(rateMap.keys().next().value);
+    return false;
   }
-  return `v_${Math.abs(hash).toString(36)}`;
+  entry.count += 1;
+  return entry.count > MAX_EVENTS;
 }
 
-function parseUserAgent(ua) {
-  ua = ua || "";
+function visitorHash(ip, ua) {
+  return `v_${crypto.createHash("sha256").update(`${ip}|${ua}`).digest("hex").slice(0, 32)}`;
+}
+
+function parseUserAgent(ua = "") {
   let device = "Desktop";
   if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) device = "Tablet";
-  else if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) device = "Mobile";
-
+  else if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/i.test(ua)) device = "Mobile";
   let browser = "Other";
-  if (ua.includes("Firefox")) browser = "Firefox";
-  else if (ua.includes("Edg")) browser = "Edge";
-  else if (ua.includes("Chrome")) browser = "Chrome";
-  else if (ua.includes("Safari")) browser = "Safari";
-  else if (ua.includes("Opera") || ua.includes("OPR")) browser = "Opera";
-
+  if (/Edg/i.test(ua)) browser = "Edge";
+  else if (/Firefox/i.test(ua)) browser = "Firefox";
+  else if (/Chrome/i.test(ua)) browser = "Chrome";
+  else if (/Safari/i.test(ua)) browser = "Safari";
+  else if (/Opera|OPR/i.test(ua)) browser = "Opera";
   let os = "Other";
-  if (ua.includes("Windows")) os = "Windows";
-  else if (ua.includes("Mac")) os = "macOS";
-  else if (ua.includes("Linux")) os = "Linux";
-  else if (ua.includes("Android")) os = "Android";
-  else if (ua.includes("iOS") || ua.includes("iPhone") || ua.includes("iPad")) os = "iOS";
-
+  if (/Windows/i.test(ua)) os = "Windows";
+  else if (/Mac/i.test(ua)) os = "macOS";
+  else if (/Android/i.test(ua)) os = "Android";
+  else if (/iOS|iPhone|iPad/i.test(ua)) os = "iOS";
+  else if (/Linux/i.test(ua)) os = "Linux";
   return { device, browser, os };
 }
 
 export async function POST(req) {
   try {
-    const { username, type, linkId, linkTitle } = await req.json();
-    if (!username || !type) return NextResponse.json({ error: "Missing params" }, { status: 400 });
-
-    const dbUser = await findUser("username", username);
-    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    const visitorId = await generateVisitorId();
     const headersList = await headers();
     const ua = headersList.get("user-agent") || "";
-    const referer = headersList.get("referer") || null;
-    const { device, browser, os } = parseUserAgent(ua);
+    const ip = headersList.get("x-forwarded-for")?.split(",")[0]?.trim() || headersList.get("x-real-ip") || "unknown";
+    if (isRateLimited(visitorHash(ip, "rate-limit"))) return Response.json({ ok: false }, { status: 429 });
 
-    // For country, would need GeoIP service — leaving as null for now
-    const country = null;
+    const body = await readJson(req, 16 * 1024);
+    const username = validateUsername(body.username);
+    const type = body.type === "view" || body.type === "click" ? body.type : null;
+    if (!username || !type) return Response.json({ error: "Invalid analytics event." }, { status: 400 });
+
+    const dbUser = await findUserByUsername(username);
+    if (!dbUser) return Response.json({ error: "User not found." }, { status: 404 });
+
+    const linkId = body.linkId == null ? null : Number(body.linkId);
+    if (linkId !== null && (!Number.isSafeInteger(linkId) || linkId <= 0)) return Response.json({ error: "Invalid link ID." }, { status: 400 });
+    const linkTitle = typeof body.linkTitle === "string" ? body.linkTitle.slice(0, 200) : null;
+    const { device, browser, os } = parseUserAgent(ua);
+    const referrer = (headersList.get("referer") || "").slice(0, 2048) || null;
 
     await recordEvent({
       user_id: dbUser.id,
       type,
-      link_id: linkId ?? null,
-      link_title: linkTitle ?? null,
-      visitor_id: visitorId,
-      country,
+      link_id: linkId,
+      link_title: linkTitle,
+      visitor_id: visitorHash(ip, ua),
       device,
       browser,
       os,
-      referrer: referer,
+      referrer,
     });
 
-    return NextResponse.json({ ok: true });
+    return Response.json({ ok: true }, { headers: { "Cache-Control": "no-store" } });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("Analytics tracking error:", err);
+    return Response.json({ error: "Unable to record analytics." }, { status: 500 });
   }
 }

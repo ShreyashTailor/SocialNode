@@ -1,5 +1,4 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser } from "@/models/user";
+import { getCurrentUserContext } from "@/lib/security";
 import ProfileForm from "./_components/ProfileForm";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
@@ -7,9 +6,7 @@ import { ExternalLink } from "lucide-react";
 export const metadata = { title: "Profile" };
 
 export default async function ProfilePage() {
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-  const dbUser = email ? await findUser("email", email) : null;
+  const { clerkUser, email, dbUser } = await getCurrentUserContext();
 
   return (
     <div className="max-w-2xl mx-auto space-y-6 pb-20 lg:pb-0">

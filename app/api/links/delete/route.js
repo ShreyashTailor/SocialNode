@@ -1,22 +1,18 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, deleteCustomLink } from "@/models/user";
-import { NextResponse } from "next/server";
+import { deleteCustomLink } from "@/models/user";
+import { getCurrentDbUser, assertSameOrigin, readJson, safeErrorMessage } from "@/lib/security";
 
 export async function DELETE(req) {
   try {
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-    if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const dbUser = await findUser("email", email);
-    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    const { id } = await req.json();
-    if (!id) return NextResponse.json({ error: "Link ID required" }, { status: 400 });
-
-    await deleteCustomLink(id, dbUser.id);
-    return NextResponse.json({ ok: true });
+    if (!assertSameOrigin(req)) return Response.json({ error: "Invalid request origin." }, { status: 403 });
+    const user = await getCurrentDbUser();
+    if (!user) return Response.json({ error: "Unauthorized or profile not found." }, { status: 401 });
+    const body = await readJson(req);
+    const id = Number(body.id);
+    if (!Number.isSafeInteger(id) || id <= 0) return Response.json({ error: "Valid link ID required." }, { status: 400 });
+    await deleteCustomLink(id, user.id);
+    return Response.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("Delete link error:", err);
+    return Response.json({ error: safeErrorMessage(err) }, { status: 500 });
   }
 }

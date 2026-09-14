@@ -113,7 +113,7 @@ export default function LinksManager({ initialLinks, userId }) {
   const handleSave = async () => {
     if (!form.title.trim()) { toast({ title: "Title is required.", variant: "destructive" }); return; }
     if (!form.url.trim()) { toast({ title: "URL is required.", variant: "destructive" }); return; }
-    try { new URL(form.url); } catch { toast({ title: "Invalid URL.", variant: "destructive" }); return; }
+    try { const parsed = new URL(form.url); if (!["http:", "https:"].includes(parsed.protocol)) throw new Error(); } catch { toast({ title: "Only HTTP/HTTPS URLs are allowed.", variant: "destructive" }); return; }
 
     setSaving(true);
     const payload = {
@@ -175,11 +175,12 @@ export default function LinksManager({ initialLinks, userId }) {
   const handleToggle = async (id, current) => {
     const newVal = current ? 0 : 1;
     try {
-      await fetch("/api/links/update", {
+      const res = await fetch("/api/links/update", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id, enabled: newVal }),
       });
+      if (!res.ok) throw new Error("Failed to update link.");
       setLinks((prev) => prev.map((l) => (l.id === id ? { ...l, enabled: newVal } : l)));
     } catch {
       toast({ title: "Failed to toggle link.", variant: "destructive" });
@@ -194,14 +195,21 @@ export default function LinksManager({ initialLinks, userId }) {
     const [moved] = reordered.splice(dragItem.current, 1);
     reordered.splice(dragOverItem.current, 0, moved);
     const withOrder = reordered.map((l, i) => ({ ...l, sort_order: i }));
+    const previous = links;
     setLinks(withOrder);
     dragItem.current = null;
     dragOverItem.current = null;
-    await fetch("/api/links/reorder", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ orderedIds: withOrder.map((l) => l.id) }),
-    });
+    try {
+      const res = await fetch("/api/links/reorder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderedIds: withOrder.map((l) => l.id) }),
+      });
+      if (!res.ok) throw new Error("Failed to save order.");
+    } catch (error) {
+      setLinks(previous);
+      toast({ title: error.message, variant: "destructive" });
+    }
   };
 
   return (

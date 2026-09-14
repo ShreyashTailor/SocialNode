@@ -1,13 +1,11 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, getCustomLinks } from "@/models/user";
+import { getCustomLinks } from "@/models/user";
+import { getCurrentUserContext } from "@/lib/security";
 import LinksManager from "./_components/LinksManager";
 
 export const metadata = { title: "Links" };
 
 export default async function LinksPage() {
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-  const dbUser = email ? await findUser("email", email) : null;
+  const { dbUser } = await getCurrentUserContext();
 
   if (!dbUser) {
     return (

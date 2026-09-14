@@ -1,22 +1,22 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, reorderCustomLinks } from "@/models/user";
-import { NextResponse } from "next/server";
+import { getCustomLinks, reorderCustomLinks } from "@/models/user";
+import { getCurrentDbUser, assertSameOrigin, readJson, safeErrorMessage } from "@/lib/security";
 
 export async function POST(req) {
   try {
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-    if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const dbUser = await findUser("email", email);
-    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    const { orderedIds } = await req.json();
-    if (!Array.isArray(orderedIds)) return NextResponse.json({ error: "orderedIds array required" }, { status: 400 });
-
-    await reorderCustomLinks(dbUser.id, orderedIds);
-    return NextResponse.json({ ok: true });
+    if (!assertSameOrigin(req)) return Response.json({ error: "Invalid request origin." }, { status: 403 });
+    const user = await getCurrentDbUser();
+    if (!user) return Response.json({ error: "Unauthorized or profile not found." }, { status: 401 });
+    const body = await readJson(req);
+    if (!Array.isArray(body.orderedIds) || body.orderedIds.length > 100) return Response.json({ error: "Invalid orderedIds." }, { status: 400 });
+    const ids = body.orderedIds.map(Number);
+    if (ids.some((id) => !Number.isSafeInteger(id) || id <= 0) || new Set(ids).size !== ids.length) return Response.json({ error: "Invalid link IDs." }, { status: 400 });
+    const current = await getCustomLinks(user.id);
+    const currentIds = new Set(current.map((l) => Number(l.id)));
+    if (ids.length !== current.length || ids.some((id) => !currentIds.has(id))) return Response.json({ error: "The link list is out of date. Refresh and try again." }, { status: 409 });
+    await reorderCustomLinks(user.id, ids);
+    return Response.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("Reorder links error:", err);
+    return Response.json({ error: safeErrorMessage(err) }, { status: 500 });
   }
 }

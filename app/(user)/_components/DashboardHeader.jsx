@@ -1,17 +1,12 @@
 import Logo from "@/components/Logo";
 import { ModeToggle } from "@/components/ModeToggle";
 import { UserButton } from "@clerk/nextjs";
-import { currentUser } from "@clerk/nextjs/server";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
-import { findUser } from "@/models/user";
+import { getCurrentUserContext } from "@/lib/security";
 
 export default async function DashboardHeader() {
-  const clerkUser = await currentUser();
-  let profileUser = null;
-  if (clerkUser?.emailAddresses?.[0]?.emailAddress) {
-    profileUser = await findUser("email", clerkUser.emailAddresses[0].emailAddress);
-  }
+  const { dbUser: profileUser } = await getCurrentUserContext();
 
   return (
     <header className="sticky top-0 z-50 border-b bg-background/95 backdrop-blur-sm">

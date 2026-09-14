@@ -1,37 +1,39 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, upsertAppearance } from "@/models/user";
-import { NextResponse } from "next/server";
+import { upsertAppearance } from "@/models/user";
+import { getCurrentDbUser, assertSameOrigin, readJson, safeErrorMessage, validateColor, validateGradient, validateHttpUrl } from "@/lib/security";
+
+const THEMES = new Set(["minimal", "dark", "neon", "quantum", "sunset", "ocean", "forest", "retro", "glass", "professional", "luxury", "apple", "developer", "creator", "card"]);
+const BUTTON_STYLES = new Set(["filled", "outlined"]);
+const BUTTON_SHAPES = new Set(["rounded", "pill", "square"]);
+const FONTS = new Set(["inter", "poppins", "mono"]);
 
 export async function POST(req) {
   try {
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-    if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    if (!assertSameOrigin(req)) return Response.json({ error: "Invalid request origin." }, { status: 403 });
+    const user = await getCurrentDbUser();
+    if (!user) return Response.json({ error: "Unauthorized or profile not found." }, { status: 401 });
+    const body = await readJson(req);
+    const theme = THEMES.has(body.theme) ? body.theme : "minimal";
+    const bg_color = validateColor(body.bg_color);
+    const text_color = validateColor(body.text_color) || "#111111";
+    const link_color = validateColor(body.link_color) || "#000000";
+    const bg_gradient = validateGradient(body.bg_gradient);
+    const bg_image = body.bg_image ? validateHttpUrl(body.bg_image) : null;
+    if (body.bg_image && !bg_image) return Response.json({ error: "Background image must be an HTTP/HTTPS URL." }, { status: 400 });
 
-    const dbUser = await findUser("email", email);
-    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    const body = await req.json();
-    const { 
-      theme, bg_color, bg_gradient, bg_image, button_style, button_shape, 
-      font, text_color, link_color
-    } = body;
-
-    await upsertAppearance(dbUser.id, {
-      theme: theme || "minimal",
-      bg_color: bg_color || null,
-      bg_gradient: bg_gradient || null,
-      bg_image: bg_image || null,
-      button_style: button_style || "filled",
-      button_shape: button_shape || "rounded",
-      font: font || "inter",
-      text_color: text_color || null,
-      link_color: link_color || null,
+    await upsertAppearance(user.id, {
+      theme,
+      bg_color,
+      bg_gradient,
+      bg_image,
+      button_style: BUTTON_STYLES.has(body.button_style) ? body.button_style : "filled",
+      button_shape: BUTTON_SHAPES.has(body.button_shape) ? body.button_shape : "rounded",
+      font: FONTS.has(body.font) ? body.font : "inter",
+      text_color,
+      link_color,
     });
-
-    return NextResponse.json({ ok: true });
+    return Response.json({ ok: true });
   } catch (err) {
     console.error("Appearance save error:", err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return Response.json({ error: safeErrorMessage(err) }, { status: 500 });
   }
 }

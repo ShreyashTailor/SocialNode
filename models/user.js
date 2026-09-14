@@ -1,264 +1,201 @@
 import { initDb } from "@/lib/db";
 
-// ─── Users ────────────────────────────────────────────────────────────────────
+const USER_FIELDS = [
+  "name", "image", "email", "username", "bio", "youtube", "instagram", "facebook", "github",
+  "snapchat", "twitter", "linkedin", "threads", "reddit", "stackoverflow", "leetcode",
+  "codeforces", "hackerrank", "codechef", "geeksForGeeks", "twitch", "soundcloud", "spotify",
+  "applemusic", "discord", "telegram", "whatsapp", "skype", "amazon", "shopify", "kofi",
+  "buyMeACoffee", "patreon", "website", "blog", "phone", "accessKey", "github_username",
+];
+const PUBLIC_USER_FIELDS = ["id", ...USER_FIELDS.filter((f) => !["email", "accessKey", "phone"].includes(f))];
+const LINK_FIELDS = ["title", "url", "description", "icon", "enabled", "sort_order", "scheduled", "start_at", "end_at"];
+const APPEARANCE_FIELDS = ["theme", "bg_color", "bg_gradient", "bg_image", "button_style", "button_shape", "font", "text_color", "link_color", "border_radius"];
+
+function quoteField(field, allowed) {
+  if (!allowed.includes(field)) throw new Error("Invalid field.");
+  return `"${field}"`;
+}
 
 export async function findUser(field, value) {
   const db = await initDb();
+  const safeField = quoteField(field, USER_FIELDS);
+  const result = await db.execute({ sql: `SELECT * FROM users WHERE ${safeField} = ? LIMIT 1`, args: [value] });
+  return result.rows[0] ?? null;
+}
+
+export async function findUserByEmail(email) { return findUser("email", email); }
+export async function findUserByUsername(username) { return findUser("username", username); }
+
+export async function getPublicUserByUsername(username) {
+  const db = await initDb();
   const result = await db.execute({
-    sql: `SELECT * FROM users WHERE ${field} = ? LIMIT 1`,
-    args: [value],
+    sql: `SELECT ${PUBLIC_USER_FIELDS.map((f) => `"${f}"`).join(", ")} FROM users WHERE username = ? LIMIT 1`,
+    args: [username],
   });
   return result.rows[0] ?? null;
 }
 
 export async function createUser(data) {
   const db = await initDb();
-  const fields = Object.keys(data);
+  const fields = Object.keys(data).filter((f) => USER_FIELDS.includes(f));
+  if (!fields.length) throw new Error("No user data supplied.");
   const placeholders = fields.map(() => "?").join(", ");
-  await db.execute({
-    sql: `INSERT INTO users (${fields.join(", ")}) VALUES (${placeholders})`,
-    args: Object.values(data),
+  const result = await db.execute({
+    sql: `INSERT INTO users (${fields.map((f) => `"${f}"`).join(", ")}) VALUES (${placeholders}) RETURNING id`,
+    args: fields.map((f) => data[f]),
   });
-  const row = await db.execute({ sql: `SELECT last_insert_rowid() AS id`, args: [] });
-  return row.rows[0].id;
+  return result.rows[0]?.id;
+}
+
+export async function updateUserById(userId, data) {
+  const db = await initDb();
+  const fields = Object.keys(data).filter((f) => USER_FIELDS.includes(f) && f !== "id");
+  if (!fields.length) return;
+  const setClause = fields.map((f) => `"${f}" = ?`).join(", ");
+  await db.execute({ sql: `UPDATE users SET ${setClause} WHERE id = ?`, args: [...fields.map((f) => data[f]), userId] });
 }
 
 export async function updateUser(email, data) {
-  const db = await initDb();
-  const fields = Object.keys(data);
-  const setClause = fields.map((f) => `"${f}" = ?`).join(", ");
-  await db.execute({
-    sql: `UPDATE users SET ${setClause} WHERE email = ?`,
-    args: [...Object.values(data), email],
-  });
+  const user = await findUserByEmail(email);
+  if (!user) return;
+  return updateUserById(user.id, data);
 }
-
-// ─── Custom Links ─────────────────────────────────────────────────────────────
 
 export async function getCustomLinks(userId) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT * FROM custom_links WHERE user_id = ? ORDER BY sort_order ASC`,
-    args: [userId],
-  });
+  const result = await db.execute({ sql: `SELECT * FROM custom_links WHERE user_id = ? ORDER BY sort_order ASC, id ASC LIMIT 100`, args: [userId] });
   return result.rows;
 }
 
 export async function createCustomLink(data) {
   const db = await initDb();
-  const { user_id, title, url, description, icon, enabled, sort_order, scheduled, start_at, end_at } = data;
   const result = await db.execute({
-    sql: `INSERT INTO custom_links (user_id, title, url, description, icon, enabled, sort_order, scheduled, start_at, end_at)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [user_id, title, url, description ?? null, icon ?? "link", enabled ?? 1, sort_order ?? 0, scheduled ?? 0, start_at ?? null, end_at ?? null],
+    sql: `INSERT INTO custom_links (user_id,title,url,description,icon,enabled,sort_order,scheduled,start_at,end_at)
+          VALUES (?,?,?,?,?,?,?,?,?,?) RETURNING id`,
+    args: [data.user_id, data.title, data.url, data.description ?? null, data.icon ?? "link", data.enabled ?? 1,
+      data.sort_order ?? 0, data.scheduled ?? 0, data.start_at ?? null, data.end_at ?? null],
   });
-  return result.lastInsertRowid;
+  return result.rows[0]?.id;
 }
 
 export async function updateCustomLink(id, userId, data) {
   const db = await initDb();
-  const fields = Object.keys(data);
+  const fields = Object.keys(data).filter((f) => LINK_FIELDS.includes(f));
+  if (!fields.length) return;
   const setClause = fields.map((f) => `"${f}" = ?`).join(", ");
-  await db.execute({
-    sql: `UPDATE custom_links SET ${setClause} WHERE id = ? AND user_id = ?`,
-    args: [...Object.values(data), id, userId],
-  });
+  await db.execute({ sql: `UPDATE custom_links SET ${setClause} WHERE id = ? AND user_id = ?`, args: [...fields.map((f) => data[f]), id, userId] });
 }
 
 export async function deleteCustomLink(id, userId) {
   const db = await initDb();
-  await db.execute({
-    sql: `DELETE FROM custom_links WHERE id = ? AND user_id = ?`,
-    args: [id, userId],
-  });
+  await db.execute({ sql: `DELETE FROM custom_links WHERE id = ? AND user_id = ?`, args: [id, userId] });
 }
 
 export async function reorderCustomLinks(userId, orderedIds) {
   const db = await initDb();
-  for (let i = 0; i < orderedIds.length; i++) {
-    await db.execute({
-      sql: `UPDATE custom_links SET sort_order = ? WHERE id = ? AND user_id = ?`,
-      args: [i, orderedIds[i], userId],
-    });
-  }
+  const statements = orderedIds.map((id, i) => ({
+    sql: `UPDATE custom_links SET sort_order = ? WHERE id = ? AND user_id = ?`,
+    args: [i, id, userId],
+  }));
+  if (statements.length) await db.batch(statements, "write");
 }
-
-// ─── Appearance ───────────────────────────────────────────────────────────────
 
 export async function getAppearance(userId) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT * FROM appearances WHERE user_id = ? LIMIT 1`,
-    args: [userId],
-  });
+  const result = await db.execute({ sql: `SELECT * FROM appearances WHERE user_id = ? LIMIT 1`, args: [userId] });
   return result.rows[0] ?? null;
 }
 
 export async function upsertAppearance(userId, data) {
   const db = await initDb();
-  const existing = await getAppearance(userId);
-  
-  // Only include fields that we know exist in the table
-  const allowedFields = [
-    'theme', 'bg_color', 'bg_gradient', 'bg_image', 'button_style', 'button_shape', 
-    'font', 'text_color', 'link_color', 'border_radius', 'custom_css'
-  ];
-  
-  const filteredData = Object.fromEntries(
-    Object.entries(data).filter(([key]) => allowedFields.includes(key))
-  );
-  
-  if (existing) {
-    const fields = Object.keys(filteredData);
-    if (fields.length === 0) return; // Nothing to update
-    
-    const setClause = fields.map((f) => `"${f}" = ?`).join(", ");
-    await db.execute({
-      sql: `UPDATE appearances SET ${setClause}, updated_at = unixepoch() WHERE user_id = ?`,
-      args: [...Object.values(filteredData), userId],
-    });
-  } else {
-    const fields = ["user_id", ...Object.keys(filteredData)];
-    const placeholders = fields.map(() => "?").join(", ");
-    await db.execute({
-      sql: `INSERT INTO appearances (${fields.join(", ")}) VALUES (${placeholders})`,
-      args: [userId, ...Object.values(filteredData)],
-    });
-  }
+  const fields = Object.keys(data).filter((f) => APPEARANCE_FIELDS.includes(f));
+  if (!fields.length) return;
+  const columns = ["user_id", ...fields];
+  const placeholders = columns.map(() => "?").join(", ");
+  const updates = fields.map((f) => `"${f}" = excluded."${f}"`).join(", ");
+  await db.execute({
+    sql: `INSERT INTO appearances (${columns.map((f) => `"${f}"`).join(", ")}) VALUES (${placeholders})
+          ON CONFLICT(user_id) DO UPDATE SET ${updates}, updated_at = unixepoch()`,
+    args: [userId, ...fields.map((f) => data[f])],
+  });
 }
-
-// ─── GitHub Cache ─────────────────────────────────────────────────────────────
 
 export async function getGithubCache(userId) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT * FROM github_cache WHERE user_id = ? LIMIT 1`,
-    args: [userId],
-  });
+  const result = await db.execute({ sql: `SELECT * FROM github_cache WHERE user_id = ? LIMIT 1`, args: [userId] });
   return result.rows[0] ?? null;
 }
 
-export async function upsertGithubCache(userId, username, profileJson, reposJson, featured) {
+export async function upsertGithubCache(userId, username, profileJson, reposJson, featured = "[]") {
   const db = await initDb();
-  const existing = await getGithubCache(userId);
-  if (existing) {
-    await db.execute({
-      sql: `UPDATE github_cache SET username = ?, profile_json = ?, repos_json = ?, featured = ?, cached_at = unixepoch() WHERE user_id = ?`,
-      args: [username, profileJson, reposJson, featured ?? "[]", userId],
-    });
-  } else {
-    await db.execute({
-      sql: `INSERT INTO github_cache (user_id, username, profile_json, repos_json, featured, cached_at) VALUES (?, ?, ?, ?, ?, unixepoch())`,
-      args: [userId, username, profileJson, reposJson, featured ?? "[]"],
-    });
-  }
+  await db.execute({
+    sql: `INSERT INTO github_cache (user_id,username,profile_json,repos_json,featured,cached_at)
+          VALUES (?,?,?,?,?,unixepoch())
+          ON CONFLICT(user_id) DO UPDATE SET username=excluded.username, profile_json=excluded.profile_json,
+          repos_json=excluded.repos_json, featured=excluded.featured, cached_at=unixepoch()`,
+    args: [userId, username, profileJson, reposJson, featured],
+  });
 }
 
 export async function updateGithubFeatured(userId, featured) {
   const db = await initDb();
-  await db.execute({
-    sql: `UPDATE github_cache SET featured = ? WHERE user_id = ?`,
-    args: [JSON.stringify(featured), userId],
-  });
+  await db.execute({ sql: `UPDATE github_cache SET featured = ? WHERE user_id = ?`, args: [JSON.stringify(featured), userId] });
 }
-
-// ─── Analytics ────────────────────────────────────────────────────────────────
 
 export async function recordEvent(data) {
   const db = await initDb();
-  const { user_id, type, link_id, link_title, visitor_id, country, device, browser, os, referrer } = data;
   await db.execute({
-    sql: `INSERT INTO analytics_events (user_id, type, link_id, link_title, visitor_id, country, device, browser, os, referrer)
-          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-    args: [user_id, type, link_id ?? null, link_title ?? null, visitor_id ?? null, country ?? null, device ?? null, browser ?? null, os ?? null, referrer ?? null],
+    sql: `INSERT INTO analytics_events (user_id,type,link_id,link_title,visitor_id,country,device,browser,os,referrer)
+          VALUES (?,?,?,?,?,?,?,?,?,?)`,
+    args: [data.user_id, data.type, data.link_id ?? null, data.link_title ?? null, data.visitor_id ?? null,
+      data.country ?? null, data.device ?? null, data.browser ?? null, data.os ?? null, data.referrer ?? null],
   });
 }
 
 export async function getAnalyticsSummary(userId, since) {
   const db = await initDb();
-
-  const [views, uniqueVisitors, clicks] = await Promise.all([
-    db.execute({ sql: `SELECT COUNT(*) AS c FROM analytics_events WHERE user_id = ? AND type = 'view' AND ts >= ?`, args: [userId, since] }),
-    db.execute({ sql: `SELECT COUNT(DISTINCT visitor_id) AS c FROM analytics_events WHERE user_id = ? AND type = 'view' AND ts >= ? AND visitor_id IS NOT NULL`, args: [userId, since] }),
-    db.execute({ sql: `SELECT COUNT(*) AS c FROM analytics_events WHERE user_id = ? AND type = 'click' AND ts >= ?`, args: [userId, since] }),
-  ]);
-
-  const totalViews   = views.rows[0].c ?? 0;
-  const totalUnique  = uniqueVisitors.rows[0].c ?? 0;
-  const totalClicks  = clicks.rows[0].c ?? 0;
-  const ctr          = totalViews > 0 ? ((totalClicks / totalViews) * 100).toFixed(1) : "0.0";
-
-  return { totalViews, totalUnique, totalClicks, ctr };
-}
-
-export async function getViewsOverTime(userId, since, days) {
-  const db = await initDb();
   const result = await db.execute({
-    sql: `SELECT date(ts, 'unixepoch') AS day, COUNT(*) AS count
-          FROM analytics_events
-          WHERE user_id = ? AND type = 'view' AND ts >= ?
-          GROUP BY day ORDER BY day ASC`,
+    sql: `SELECT
+      SUM(CASE WHEN type='view' THEN 1 ELSE 0 END) AS views,
+      COUNT(DISTINCT CASE WHEN type='view' THEN visitor_id END) AS unique_visitors,
+      SUM(CASE WHEN type='click' THEN 1 ELSE 0 END) AS clicks
+      FROM analytics_events WHERE user_id = ? AND ts >= ?`,
     args: [userId, since],
   });
-  return result.rows;
+  const row = result.rows[0] || {};
+  const totalViews = Number(row.views || 0);
+  const totalUnique = Number(row.unique_visitors || 0);
+  const totalClicks = Number(row.clicks || 0);
+  return { totalViews, totalUnique, totalClicks, ctr: totalViews ? ((totalClicks / totalViews) * 100).toFixed(1) : "0.0" };
 }
 
+export async function getViewsOverTime(userId, since) {
+  const db = await initDb();
+  const result = await db.execute({ sql: `SELECT date(ts,'unixepoch') AS day, COUNT(*) AS count FROM analytics_events WHERE user_id=? AND type='view' AND ts>=? GROUP BY day ORDER BY day ASC`, args: [userId, since] });
+  return result.rows;
+}
 export async function getClicksOverTime(userId, since) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT date(ts, 'unixepoch') AS day, COUNT(*) AS count
-          FROM analytics_events
-          WHERE user_id = ? AND type = 'click' AND ts >= ?
-          GROUP BY day ORDER BY day ASC`,
-    args: [userId, since],
-  });
+  const result = await db.execute({ sql: `SELECT date(ts,'unixepoch') AS day, COUNT(*) AS count FROM analytics_events WHERE user_id=? AND type='click' AND ts>=? GROUP BY day ORDER BY day ASC`, args: [userId, since] });
   return result.rows;
 }
-
 export async function getTopLinks(userId, since) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT link_title, COUNT(*) AS clicks
-          FROM analytics_events
-          WHERE user_id = ? AND type = 'click' AND ts >= ? AND link_title IS NOT NULL
-          GROUP BY link_title ORDER BY clicks DESC LIMIT 10`,
-    args: [userId, since],
-  });
+  const result = await db.execute({ sql: `SELECT link_title, COUNT(*) AS clicks FROM analytics_events WHERE user_id=? AND type='click' AND ts>=? AND link_title IS NOT NULL GROUP BY link_title ORDER BY clicks DESC LIMIT 10`, args: [userId, since] });
   return result.rows;
 }
-
 export async function getCountries(userId, since) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT country, COUNT(*) AS count
-          FROM analytics_events
-          WHERE user_id = ? AND type = 'view' AND ts >= ? AND country IS NOT NULL
-          GROUP BY country ORDER BY count DESC LIMIT 10`,
-    args: [userId, since],
-  });
+  const result = await db.execute({ sql: `SELECT country, COUNT(*) AS count FROM analytics_events WHERE user_id=? AND type='view' AND ts>=? AND country IS NOT NULL GROUP BY country ORDER BY count DESC LIMIT 10`, args: [userId, since] });
   return result.rows;
 }
-
 export async function getDevices(userId, since) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT device, COUNT(*) AS count
-          FROM analytics_events
-          WHERE user_id = ? AND ts >= ? AND device IS NOT NULL
-          GROUP BY device ORDER BY count DESC`,
-    args: [userId, since],
-  });
+  const result = await db.execute({ sql: `SELECT device, COUNT(*) AS count FROM analytics_events WHERE user_id=? AND ts>=? AND device IS NOT NULL GROUP BY device ORDER BY count DESC`, args: [userId, since] });
   return result.rows;
 }
-
 export async function getReferrers(userId, since) {
   const db = await initDb();
-  const result = await db.execute({
-    sql: `SELECT referrer, COUNT(*) AS count
-          FROM analytics_events
-          WHERE user_id = ? AND ts >= ? AND referrer IS NOT NULL
-          GROUP BY referrer ORDER BY count DESC LIMIT 10`,
-    args: [userId, since],
-  });
+  const result = await db.execute({ sql: `SELECT referrer, COUNT(*) AS count FROM analytics_events WHERE user_id=? AND ts>=? AND referrer IS NOT NULL GROUP BY referrer ORDER BY count DESC LIMIT 10`, args: [userId, since] });
   return result.rows;
 }

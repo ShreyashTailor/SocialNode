@@ -1,5 +1,5 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, getAnalyticsSummary, getCustomLinks } from "@/models/user";
+import { getAnalyticsSummary, getCustomLinks } from "@/models/user";
+import { getCurrentUserContext } from "@/lib/security";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
@@ -50,9 +50,7 @@ function QuickLink({ href, icon: Icon, label, description }) {
 export const metadata = { title: "Dashboard" };
 
 export default async function DashboardPage() {
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-  const dbUser = email ? await findUser("email", email) : null;
+  const { clerkUser, dbUser } = await getCurrentUserContext();
 
   const since7d = Math.floor(Date.now() / 1000) - 7 * 86400;
   const [stats, links] = await Promise.all([
@@ -119,7 +117,7 @@ export default async function DashboardPage() {
             <div className="flex-1 min-w-0">
               <p className="text-xs text-muted-foreground mb-0.5">Your profile URL</p>
               <p className="text-sm font-mono font-medium truncate">
-                {typeof window !== "undefined" ? window.location.origin : "https://socialnode.blear.in"}/{dbUser?.username}
+                {process.env.NEXT_PUBLIC_APP_URL || "https://socialnode.blear.in"}/{dbUser?.username}
               </p>
             </div>
             <div className="flex gap-2 shrink-0">

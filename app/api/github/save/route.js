@@ -1,22 +1,19 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, updateGithubFeatured } from "@/models/user";
-import { NextResponse } from "next/server";
+import { updateGithubFeatured } from "@/models/user";
+import { getCurrentDbUser, assertSameOrigin, readJson, safeErrorMessage } from "@/lib/security";
 
 export async function POST(req) {
   try {
-    const clerkUser = await currentUser();
-    const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-    if (!email) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const dbUser = await findUser("email", email);
-    if (!dbUser) return NextResponse.json({ error: "User not found" }, { status: 404 });
-
-    const { featured } = await req.json();
-    if (!Array.isArray(featured)) return NextResponse.json({ error: "featured array required" }, { status: 400 });
-
-    await updateGithubFeatured(dbUser.id, featured);
-    return NextResponse.json({ ok: true });
+    if (!assertSameOrigin(req)) return Response.json({ error: "Invalid request origin." }, { status: 403 });
+    const user = await getCurrentDbUser();
+    if (!user) return Response.json({ error: "Unauthorized or profile not found." }, { status: 401 });
+    const body = await readJson(req);
+    if (!Array.isArray(body.featured) || body.featured.length > 30 || body.featured.some((v) => typeof v !== "string" || v.length > 200)) {
+      return Response.json({ error: "Invalid featured repositories." }, { status: 400 });
+    }
+    await updateGithubFeatured(user.id, [...new Set(body.featured)]);
+    return Response.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    console.error("GitHub featured save error:", err);
+    return Response.json({ error: safeErrorMessage(err) }, { status: 500 });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Icons } from "./icons";
 import { Share2, ExternalLink, Star, GitFork, Circle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -17,6 +17,7 @@ function trackView(username) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, type: "view" }),
+    keepalive: true,
   }).catch(() => {});
 }
 
@@ -26,6 +27,7 @@ function trackClick(linkId, linkTitle) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, type: "click", linkId, linkTitle }),
+    keepalive: true,
   }).catch(() => {});
 }
 
@@ -487,15 +489,10 @@ function AppleGlassTheme({ user, customLinks, socialPlatforms, featuredRepos, ha
   );
 }
 
-export default function PublicProfile({ user, customLinks, appearance, githubCache }) {
-  const [mounted, setMounted] = useState(false);
-
+export default function PublicProfile({ user, customLinks, appearance, featuredRepos }) {
   useEffect(() => {
-    setMounted(true);
     trackView(user.username);
   }, [user.username]);
-
-  if (!mounted) return null;
 
   const theme = appearance || {};
   const textColor = theme.text_color || "#111111";
@@ -509,16 +506,14 @@ export default function PublicProfile({ user, customLinks, appearance, githubCac
     "youtube", "instagram", "facebook", "twitter", "linkedin", "github",
     "snapchat", "threads", "reddit", "twitch", "soundcloud", "spotify",
     "discord", "telegram", "whatsapp", "stackoverflow", "leetcode",
-    "codeforces", "hackerrank", "codechef", "geeksforgeeks",
+    "codeforces", "hackerrank", "codechef", "geeksForGeeks",
   ];
 
-  const githubRepos = githubCache?.repos_json ? JSON.parse(githubCache.repos_json) : [];
-  const featured = githubCache?.featured ? JSON.parse(githubCache.featured) : [];
-  const featuredRepos = githubRepos.filter((r) => featured.includes(r.name));
+  const featuredRepos = Array.isArray(githubCache) ? githubCache : [];
 
   const handleShare = () => {
     if (navigator.share) {
-      navigator.share({ url: window.location.href, title: user.name });
+      navigator.share({ url: window.location.href, title: user.name }).catch(() => {});
     }
   };
 

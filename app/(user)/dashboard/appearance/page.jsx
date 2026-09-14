@@ -1,13 +1,11 @@
-import { currentUser } from "@clerk/nextjs/server";
-import { findUser, getAppearance } from "@/models/user";
+import { getAppearance } from "@/models/user";
+import { getCurrentUserContext } from "@/lib/security";
 import AppearanceForm from "./_components/AppearanceForm";
 
 export const metadata = { title: "Appearance" };
 
 export default async function AppearancePage() {
-  const clerkUser = await currentUser();
-  const email = clerkUser?.emailAddresses?.[0]?.emailAddress;
-  const dbUser = email ? await findUser("email", email) : null;
+  const { dbUser } = await getCurrentUserContext();
   const appearance = dbUser ? await getAppearance(dbUser.id) : null;
 
   if (!dbUser) {

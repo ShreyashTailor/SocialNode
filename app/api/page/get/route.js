@@ -1,12 +1,15 @@
-import { findUser } from "@/models/user";
-import { NextResponse } from "next/server";
+import { getPublicUserByUsername } from "@/models/user";
+import { validateUsername } from "@/lib/security";
 
 export async function POST(req) {
   try {
-    const { username } = await req.json();
-    const data = await findUser("username", username);
-    return NextResponse.json({ data }, { status: 200 });
+    const body = await req.json();
+    const username = validateUsername(body?.username);
+    if (!username) return Response.json({ error: "Invalid username." }, { status: 400 });
+    const data = await getPublicUserByUsername(username);
+    return Response.json({ data }, { status: 200, headers: { "Cache-Control": "public, max-age=30, stale-while-revalidate=300" } });
   } catch (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    console.error("Public profile API error:", error);
+    return Response.json({ error: "Unable to load profile." }, { status: 500 });
   }
 }
