@@ -509,8 +509,6 @@ export default function PublicProfile({ user, customLinks, appearance, featuredR
     "codeforces", "hackerrank", "codechef", "geeksForGeeks",
   ];
 
-  const featuredRepos = Array.isArray(githubCache) ? githubCache : [];
-
   const handleShare = () => {
     if (navigator.share) {
       navigator.share({ url: window.location.href, title: user.name }).catch(() => {});
