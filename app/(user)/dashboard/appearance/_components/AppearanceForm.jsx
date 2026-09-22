@@ -49,12 +49,29 @@ export const THEMES = [
   { id: "light-logoheader", label: "Logo Header", description: "Light with logo area", bg_color: "#f9fafb", text_color: "#111111", link_color: "#0066cc", button_style: "outlined", button_shape: "rounded", font: "inter" },
   { id: "dark-lorem", label: "Dark Portfolio", description: "Dark with projects section", bg_color: "#0a0a0a", text_color: "#ffffff", link_color: "#00d4ff", button_style: "filled", button_shape: "rounded", font: "inter" },
   { id: "minim-links", label: "Minim Links", description: "Browser frame style", bg_color: "#ffffff", text_color: "#111111", link_color: "#0066cc", button_style: "filled", button_shape: "rounded", font: "inter" },
+
+  // Reference-pattern themes
+  { id: "lime-fade", label: "Lime Fade", description: "Charcoal fades to chartreuse", bg_gradient: "linear-gradient(180deg, #0a0a09 0%, #16170c 20%, #333c17 45%, #5f6d24 72%, #8a9a34 100%)", text_color: "#e9f78c", link_color: "#e9f78c", button_style: "filled", button_shape: "pill", font: "rounded" },
+  { id: "crimson-fade", label: "Crimson Fade", description: "Black fades to deep red", bg_gradient: "linear-gradient(180deg, #0a0707 0%, #230808 18%, #57100f 38%, #8a1515 62%, #b02020 100%)", text_color: "#ffb193", link_color: "#7c1a1a", button_style: "filled", button_shape: "rounded", font: "rounded" },
+  { id: "sage-grid", label: "Sage Grid", description: "Graph paper with bold outlines", bg_color: "#b9cba5", text_color: "#111111", link_color: "#ffffff", button_style: "filled", button_shape: "pill", font: "rounded" },
+  { id: "warm-beige", label: "Warm Beige", description: "Charcoal to beige with serif type", bg_gradient: "linear-gradient(180deg, #0b0a09 0%, #2b2724 14%, #8e887d 24%, #c6c1b3 40%, #d5d0c3 100%)", text_color: "#2b2823", link_color: "#d6d1c4", button_style: "filled", button_shape: "rounded", font: "serif" },
+  { id: "violet-pop", label: "Violet Pop", description: "Violet to blue with magenta buttons", bg_gradient: "linear-gradient(180deg, #7c30f8 0%, #6b2cf2 32%, #4b2ae2 68%, #3626cd 100%)", text_color: "#ffffff", link_color: "#ff3fd0", button_style: "filled", button_shape: "rounded", font: "inter" },
+  { id: "prism-swirl", label: "Prism Swirl", description: "Rainbow ripples with frosted buttons", bg_gradient: "linear-gradient(160deg, #ff5fae 0%, #8a4bff 35%, #2f7bff 70%, #ff8a3f 100%)", text_color: "#ffffff", link_color: "#cec8e2", button_style: "filled", button_shape: "pill", font: "rounded" },
 ];
 
 const FONTS = [
-  { id: "inter", label: "Inter (Default)" },
+  { id: "inter", label: "Default (Geist)" },
   { id: "poppins", label: "Poppins" },
-  { id: "mono", label: "Monospace" },
+  { id: "outfit", label: "Outfit" },
+  { id: "space-grotesk", label: "Space Grotesk" },
+  { id: "nunito", label: "Nunito" },
+  { id: "rounded", label: "Rounded (Baloo 2)" },
+  { id: "serif", label: "Serif Display (Playfair)" },
+  { id: "lora", label: "Lora" },
+  { id: "dm-serif", label: "DM Serif Display" },
+  { id: "bebas-neue", label: "Bebas Neue" },
+  { id: "caveat", label: "Caveat (Handwritten)" },
+  { id: "mono", label: "Monospace (Geist Mono)" },
 ];
 
 const BUTTON_STYLES = [

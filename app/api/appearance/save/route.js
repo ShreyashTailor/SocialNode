@@ -1,10 +1,20 @@
 import { upsertAppearance } from "@/models/user";
 import { getCurrentDbUser, assertSameOrigin, readJson, safeErrorMessage, validateColor, validateGradient, validateHttpUrl } from "@/lib/security";
 
-const THEMES = new Set(["minimal", "dark", "neon", "quantum", "sunset", "ocean", "forest", "retro", "glass", "professional", "luxury", "apple", "developer", "creator", "card"]);
-const BUTTON_STYLES = new Set(["filled", "outlined"]);
-const BUTTON_SHAPES = new Set(["rounded", "pill", "square"]);
-const FONTS = new Set(["inter", "poppins", "mono"]);
+// Keep in sync with THEMES in app/(user)/dashboard/appearance/_components/AppearanceForm.jsx.
+const THEMES = new Set([
+  "minimal", "dark", "neon", "quantum", "sunset", "ocean", "forest", "retro", "glass",
+  "professional", "luxury", "apple", "developer", "cyberpunk", "creator", "monochrome", "card",
+  "dark-linktree", "light-linkinbio", "yellow-flowlink", "pink-linktree", "dark-3d",
+  "cream-linkinbio", "minimal-pill", "light-logoheader", "dark-lorem", "minim-links",
+  "lime-fade", "crimson-fade", "sage-grid", "warm-beige", "violet-pop", "prism-swirl",
+]);
+const BUTTON_STYLES = new Set(["filled", "outlined", "glass", "neon", "solid", "terminal"]);
+const BUTTON_SHAPES = new Set(["sharp", "rounded", "pill", "square"]);
+const FONTS = new Set([
+  "inter", "poppins", "outfit", "space-grotesk", "nunito", "rounded",
+  "serif", "lora", "dm-serif", "bebas-neue", "caveat", "mono",
+]);
 
 export async function POST(req) {
   try {

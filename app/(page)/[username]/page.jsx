@@ -56,7 +56,14 @@ const getProfile = cache(async (username) => {
     featuredRepos = [];
   }
 
-  return { user: safeUser, customLinks: activeLinks, appearance, featuredRepos };
+  // Appearance rows come back as libsql Row instances; clone them so the client
+  // component receives a plain object (React refuses class instances).
+  return {
+    user: safeUser,
+    customLinks: activeLinks,
+    appearance: appearance ? JSON.parse(JSON.stringify(appearance)) : null,
+    featuredRepos,
+  };
 });
 
 export async function generateMetadata({ params }) {

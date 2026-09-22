@@ -8,7 +8,16 @@ import Logo from "@/components/Logo";
 
 const FONT_MAP = {
   inter: "font-sans",
-  poppins: "font-sans",
+  poppins: "font-poppins",
+  rounded: "font-rounded",
+  serif: "font-display",
+  nunito: "font-nunito",
+  outfit: "font-outfit",
+  "space-grotesk": "font-space-grotesk",
+  "bebas-neue": "font-bebas-neue",
+  caveat: "font-caveat",
+  lora: "font-lora",
+  "dm-serif": "font-dm-serif",
   mono: "font-mono",
 };
 
@@ -29,6 +38,16 @@ function trackClick(linkId, linkTitle) {
     body: JSON.stringify({ username, type: "click", linkId, linkTitle }),
     keepalive: true,
   }).catch(() => {});
+}
+
+/** Repo title with the GitHub mark, so projects read as GitHub links. */
+function RepoName({ name, className, nameClassName }) {
+  return (
+    <span className={cn("flex items-center gap-2 min-w-0", className)}>
+      <span className="shrink-0 opacity-75">{Icons.github}</span>
+      <span className={cn("min-w-0", nameClassName)}>{name}</span>
+    </span>
+  );
 }
 
 // Theme-specific components
@@ -76,7 +95,7 @@ function MinimalTheme({ user, customLinks, socialPlatforms, featuredRepos, handl
             <h2 className="text-xl font-bold text-center">Projects</h2>
             {featuredRepos.map((repo) => (
               <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block p-3 border-2 hover:shadow-md transition-shadow" style={{ borderColor: `${linkColor}30` }}>
-                <p className="font-semibold">{repo.name}</p>
+                <RepoName name={repo.name} className="font-semibold" />
                 {repo.description && <p className="text-sm text-gray-600 mt-1">{repo.description}</p>}
               </a>
             ))}
@@ -142,7 +161,7 @@ function NeonTheme({ user, customLinks, socialPlatforms, featuredRepos, handleSh
             <h2 className="text-xl font-bold text-center" style={{ color: linkColor }}>Featured Projects</h2>
             {featuredRepos.map((repo) => (
               <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block p-4 border-2 hover:scale-105 transition-transform" style={{ borderColor: linkColor, color: linkColor, boxShadow: `0 0 15px ${linkColor}20` }}>
-                <p className="font-semibold">{repo.name}</p>
+                <RepoName name={repo.name} className="font-semibold" />
                 {repo.description && <p className="text-sm opacity-75 mt-1">{repo.description}</p>}
               </a>
             ))}
@@ -197,7 +216,7 @@ function GlassTheme({ user, customLinks, socialPlatforms, featuredRepos, handleS
             <h2 className="text-2xl font-bold text-center">Featured</h2>
             {featuredRepos.map((repo) => (
               <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" className="block p-4 backdrop-blur-xl border rounded-2xl hover:bg-white/20 transition-colors" style={{ borderColor: "rgba(255, 255, 255, 0.2)", background: "rgba(255, 255, 255, 0.08)", color: textColor }}>
-                <p className="font-semibold">{repo.name}</p>
+                <RepoName name={repo.name} className="font-semibold" />
                 <p className="text-sm text-blue-100 mt-1">{repo.description}</p>
               </a>
             ))}
@@ -255,7 +274,7 @@ function GradientTheme({ user, customLinks, socialPlatforms, featuredRepos, hand
             <div className="grid gap-3">
               {featuredRepos.map((repo) => (
                 <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="p-4 rounded-2xl hover:scale-105 transition-transform shadow-lg" style={{ background: "rgba(255, 255, 255, 0.2)", backdropFilter: "blur(10px)", color: textColor, border: "2px solid rgba(255, 255, 255, 0.3)" }}>
-                  <p className="font-bold">{repo.name}</p>
+                  <RepoName name={repo.name} className="font-bold" />
                   {repo.description && <p className="text-sm mt-1 opacity-90">{repo.description}</p>}
                 </a>
               ))}
@@ -361,7 +380,7 @@ function CardTheme({ user, customLinks, socialPlatforms, featuredRepos, handleSh
             <div className="grid gap-3">
               {featuredRepos.map((repo) => (
                 <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" className="bg-white rounded-xl p-4 shadow-md hover:shadow-lg" style={{ borderLeft: `4px solid ${linkColor}` }}>
-                  <p className="font-bold">{repo.name}</p>
+                  <RepoName name={repo.name} className="font-bold" />
                   <p className="text-sm text-gray-600 mt-1">{repo.description}</p>
                 </a>
               ))}
@@ -477,7 +496,7 @@ function AppleGlassTheme({ user, customLinks, socialPlatforms, featuredRepos, ha
                     boxShadow: "0 8px 32px rgba(31, 38, 135, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6)"
                   }}
                 >
-                  <p className="font-semibold">{repo.name}</p>
+                  <RepoName name={repo.name} className="font-semibold" />
                   {repo.description && <p className="text-sm mt-1" style={{ opacity: 0.8 }}>{repo.description}</p>}
                 </a>
               ))}
@@ -587,7 +606,7 @@ function LightLinkinBioTheme({ user, customLinks, socialPlatforms, featuredRepos
                 <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="aspect-square rounded-lg overflow-hidden border hover:opacity-90 transition-opacity" style={{ borderColor: "#e5e5e5" }}>
                   {repo.description && (
                     <div className="h-full flex flex-col justify-center p-2">
-                      <p className="text-xs font-semibold truncate">{repo.name}</p>
+                      <RepoName name={repo.name} className="text-xs font-semibold" nameClassName="truncate" />
                       <p className="text-xs text-gray-500 mt-1 line-clamp-2">{repo.description}</p>
                     </div>
                   )}
@@ -1017,7 +1036,7 @@ function DarkLoremIpsumTheme({ user, customLinks, socialPlatforms, featuredRepos
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="font-semibold text-sm">{repo.name}</p>
+                    <RepoName name={repo.name} className="font-semibold text-sm" />
                     {repo.description && <p className="text-xs text-gray-400 mt-1 line-clamp-2">{repo.description}</p>}
                   </div>
                 </a>
@@ -1119,6 +1138,371 @@ function MinimLinksTheme({ user, customLinks, socialPlatforms, featuredRepos, ha
   );
 }
 
+// Reference-pattern themes: stacked link buttons over a signature background.
+function LimeFadeTheme({ user, customLinks, socialPlatforms, featuredRepos, handleShare, textColor, linkColor, font, bgColor, bgGradient }) {
+  return (
+    <div className={cn("min-h-screen flex flex-col items-center px-6 py-16", font)} style={{ background: bgGradient || bgColor || "linear-gradient(180deg, #0a0a09 0%, #16170c 20%, #333c17 45%, #5f6d24 72%, #8a9a34 100%)", color: textColor || "#e9f78c" }}>
+      <button onClick={handleShare} className="fixed top-6 right-6 w-10 h-10 rounded-full border flex items-center justify-center hover:scale-110 transition-transform" style={{ borderColor: "rgba(255, 255, 255, 0.35)", background: "rgba(0, 0, 0, 0.35)", color: "#f2ffcc" }}>
+        <Share2 className="w-4 h-4" />
+      </button>
+
+      <div className="w-full max-w-xl space-y-8">
+        <div className="text-center space-y-4">
+          <img src={user.image} alt={user.name} className="w-24 h-24 rounded-2xl mx-auto object-cover shadow-lg" />
+          <h1 className="text-4xl font-extrabold tracking-tight">@{user.username}</h1>
+          {user.bio && <p className="opacity-80">{user.bio}</p>}
+        </div>
+
+        {/* Social icons */}
+        {socialPlatforms.some((p) => user[p]) && (
+          <div className="flex flex-wrap justify-center gap-3">
+            {socialPlatforms.map((platform) => {
+              if (!user[platform]) return null;
+              const icon = Icons[platform];
+              return (
+                <a key={platform} href={user[platform]} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform" style={{ background: "rgba(255, 255, 255, 0.12)", color: "#f2ffcc" }} onClick={() => trackClick(null, platform)}>
+                  {icon}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        {customLinks.length > 0 && (
+          <div className="space-y-3 w-full">
+            {customLinks.map((link) => (
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(link.id, link.title)} className="block w-full px-6 py-[18px] rounded-full text-center text-[11px] font-bold uppercase tracking-[0.24em] hover:brightness-105 transition-[filter]" style={{ background: linkColor || "#e9f78c", color: "#1e2408" }}>
+                {link.title}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {featuredRepos.length > 0 && (
+          <div className="w-full space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-center opacity-80">Projects</h2>
+            {featuredRepos.map((repo) => (
+              <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block w-full px-5 py-3 rounded-2xl hover:brightness-110 transition-[filter]" style={{ background: "rgba(255, 255, 255, 0.12)" }}>
+                <RepoName name={repo.name} className="font-semibold" />
+                {repo.description && <p className="text-xs mt-1 opacity-70 line-clamp-2">{repo.description}</p>}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center opacity-50 text-xs mt-8">
+          <Logo />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function CrimsonFadeTheme({ user, customLinks, socialPlatforms, featuredRepos, handleShare, textColor, linkColor, font, bgColor, bgGradient }) {
+  return (
+    <div className={cn("min-h-screen flex flex-col items-center px-6 py-16", font)} style={{ background: bgGradient || bgColor || "linear-gradient(180deg, #0a0707 0%, #230808 18%, #57100f 38%, #8a1515 62%, #b02020 100%)", color: textColor || "#ffb193" }}>
+      <button onClick={handleShare} className="fixed top-6 right-6 w-10 h-10 rounded-full border flex items-center justify-center hover:scale-110 transition-transform" style={{ borderColor: "rgba(255, 255, 255, 0.25)", background: "rgba(0, 0, 0, 0.35)", color: "#ffe6de" }}>
+        <Share2 className="w-4 h-4" />
+      </button>
+
+      <div className="w-full max-w-xl space-y-8">
+        <div className="text-center space-y-4">
+          <img src={user.image} alt={user.name} className="w-24 h-24 rounded-2xl mx-auto object-cover shadow-lg" />
+          <h1 className="text-4xl font-black tracking-tight">@{user.username}</h1>
+          {user.bio && <p className="opacity-80">{user.bio}</p>}
+        </div>
+
+        {/* Social icons */}
+        {socialPlatforms.some((p) => user[p]) && (
+          <div className="flex flex-wrap justify-center gap-3">
+            {socialPlatforms.map((platform) => {
+              if (!user[platform]) return null;
+              const icon = Icons[platform];
+              return (
+                <a key={platform} href={user[platform]} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform" style={{ background: "rgba(0, 0, 0, 0.3)", color: "#ffe6de" }} onClick={() => trackClick(null, platform)}>
+                  {icon}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        {customLinks.length > 0 && (
+          <div className="space-y-3 w-full">
+            {customLinks.map((link) => (
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(link.id, link.title)} className="block w-full px-6 py-[18px] rounded-xl text-center font-semibold hover:brightness-110 transition-[filter]" style={{ background: linkColor || "#7c1a1a", color: "#ffeae4" }}>
+                {link.title}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {featuredRepos.length > 0 && (
+          <div className="w-full space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-center opacity-80">Projects</h2>
+            {featuredRepos.map((repo) => (
+              <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block w-full px-5 py-3 rounded-xl hover:brightness-110 transition-[filter]" style={{ background: "rgba(0, 0, 0, 0.28)" }}>
+                <RepoName name={repo.name} className="font-semibold" />
+                {repo.description && <p className="text-xs mt-1 opacity-70 line-clamp-2">{repo.description}</p>}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center opacity-50 text-xs mt-8">
+          <Logo />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function SageGridTheme({ user, customLinks, socialPlatforms, featuredRepos, handleShare, textColor, linkColor, font, bgColor }) {
+  return (
+    <div className={cn("relative min-h-screen flex flex-col items-center px-6 py-16 overflow-hidden", font)} style={{ backgroundColor: bgColor || "#b9cba5", color: textColor || "#111111" }}>
+      {/* Graph-paper grid */}
+      <div className="absolute inset-0 pointer-events-none" style={{ backgroundImage: "linear-gradient(rgba(255, 255, 255, 0.45) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.45) 1px, transparent 1px)", backgroundSize: "28px 28px" }} />
+
+      <button onClick={handleShare} className="fixed top-6 right-6 z-10 w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform" style={{ background: "#ffffff", border: "2px solid #111111", boxShadow: "3px 3px 0 0 #111111", color: "#111111" }}>
+        <Share2 className="w-4 h-4" />
+      </button>
+
+      <div className="relative w-full max-w-xl space-y-8">
+        <div className="text-center space-y-4">
+          <img src={user.image} alt={user.name} className="w-24 h-24 rounded-full mx-auto object-cover" style={{ border: "2px solid #111111", boxShadow: "3px 3px 0 0 #111111" }} />
+          <h1 className="text-4xl font-black tracking-tight">@{user.username}</h1>
+          {user.bio && <p className="opacity-80">{user.bio}</p>}
+        </div>
+
+        {/* Social icons */}
+        {socialPlatforms.some((p) => user[p]) && (
+          <div className="flex flex-wrap justify-center gap-3">
+            {socialPlatforms.map((platform) => {
+              if (!user[platform]) return null;
+              const icon = Icons[platform];
+              return (
+                <a key={platform} href={user[platform]} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform" style={{ background: "#ffffff", border: "2px solid #111111", boxShadow: "2px 2px 0 0 #111111", color: "#111111" }} onClick={() => trackClick(null, platform)}>
+                  {icon}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        {customLinks.length > 0 && (
+          <div className="space-y-4 w-full">
+            {customLinks.map((link) => (
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(link.id, link.title)} className="block w-full px-6 py-[18px] rounded-full text-center text-xs font-extrabold uppercase tracking-[0.16em] transition-shadow hover:shadow-[7px_7px_0_0_#111111]" style={{ background: linkColor || "#ffffff", border: "2px solid #111111", boxShadow: "4px 4px 0 0 #111111", color: "#111111" }}>
+                {link.title}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {featuredRepos.length > 0 && (
+          <div className="w-full space-y-4">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-center">Projects</h2>
+            {featuredRepos.map((repo) => (
+              <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block w-full px-5 py-3 rounded-full transition-shadow hover:shadow-[6px_6px_0_0_#111111]" style={{ background: "#ffffff", border: "2px solid #111111", boxShadow: "3px 3px 0 0 #111111", color: "#111111" }}>
+                <RepoName name={repo.name} className="font-semibold" />
+                {repo.description && <p className="text-xs mt-1 opacity-70 line-clamp-2">{repo.description}</p>}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center opacity-50 text-xs mt-8">
+          <Logo />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function WarmBeigeTheme({ user, customLinks, socialPlatforms, featuredRepos, handleShare, textColor, linkColor, font, bgColor, bgGradient }) {
+  return (
+    <div className={cn("min-h-screen flex flex-col items-center px-6 py-16", font)} style={{ background: bgGradient || bgColor || "linear-gradient(180deg, #0b0a09 0%, #2b2724 14%, #8e887d 24%, #c6c1b3 40%, #d5d0c3 100%)", color: textColor || "#2b2823" }}>
+      <button onClick={handleShare} className="fixed top-6 right-6 w-10 h-10 rounded-full border flex items-center justify-center hover:scale-110 transition-transform" style={{ borderColor: "rgba(43, 40, 35, 0.4)", background: "rgba(255, 255, 255, 0.4)", color: "#2b2823" }}>
+        <Share2 className="w-4 h-4" />
+      </button>
+
+      <div className="w-full max-w-xl space-y-8">
+        <div className="text-center space-y-4">
+          <img src={user.image} alt={user.name} className="w-24 h-24 rounded-2xl mx-auto object-cover" />
+          <h1 className="text-4xl sm:text-5xl font-normal tracking-[0.06em]">@{user.username}</h1>
+          {user.bio && <p className="tracking-wide opacity-70">{user.bio}</p>}
+        </div>
+
+        {/* Social icons */}
+        {socialPlatforms.some((p) => user[p]) && (
+          <div className="flex flex-wrap justify-center gap-3">
+            {socialPlatforms.map((platform) => {
+              if (!user[platform]) return null;
+              const icon = Icons[platform];
+              return (
+                <a key={platform} href={user[platform]} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform" style={{ background: "rgba(255, 255, 255, 0.45)", color: "#2b2823" }} onClick={() => trackClick(null, platform)}>
+                  {icon}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        {customLinks.length > 0 && (
+          <div className="space-y-3 w-full">
+            {customLinks.map((link) => (
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(link.id, link.title)} className="block w-full px-6 py-[18px] rounded-2xl text-center text-sm font-medium tracking-wide hover:brightness-105 transition-[filter]" style={{ background: linkColor || "#d6d1c4", color: "#2b2823" }}>
+                {link.title}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {featuredRepos.length > 0 && (
+          <div className="w-full space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-center">Projects</h2>
+            {featuredRepos.map((repo) => (
+              <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block w-full px-5 py-3 rounded-2xl hover:brightness-105 transition-[filter]" style={{ background: "rgba(255, 255, 255, 0.45)", color: "#2b2823" }}>
+                <RepoName name={repo.name} className="font-semibold" />
+                {repo.description && <p className="text-xs mt-1 opacity-70 line-clamp-2">{repo.description}</p>}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center opacity-50 text-xs mt-8">
+          <Logo />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function VioletPopTheme({ user, customLinks, socialPlatforms, featuredRepos, handleShare, textColor, linkColor, font, bgColor, bgGradient }) {
+  return (
+    <div className={cn("min-h-screen flex flex-col items-center px-6 py-16", font)} style={{ background: bgGradient || bgColor || "linear-gradient(180deg, #7c30f8 0%, #6b2cf2 32%, #4b2ae2 68%, #3626cd 100%)", color: textColor || "#ffffff" }}>
+      <button onClick={handleShare} className="fixed top-6 right-6 w-10 h-10 rounded-full border flex items-center justify-center hover:scale-110 transition-transform" style={{ borderColor: "rgba(255, 255, 255, 0.4)", background: "rgba(20, 6, 31, 0.3)", color: "#ffffff" }}>
+        <Share2 className="w-4 h-4" />
+      </button>
+
+      <div className="w-full max-w-xl space-y-8">
+        <div className="text-center space-y-4">
+          <img src={user.image} alt={user.name} className="w-24 h-24 rounded-full mx-auto object-cover" />
+          <h1 className="text-3xl font-semibold">@{user.username}</h1>
+          {user.bio && <p className="opacity-80">{user.bio}</p>}
+        </div>
+
+        {/* Social icons */}
+        {socialPlatforms.some((p) => user[p]) && (
+          <div className="flex flex-wrap justify-center gap-3">
+            {socialPlatforms.map((platform) => {
+              if (!user[platform]) return null;
+              const icon = Icons[platform];
+              return (
+                <a key={platform} href={user[platform]} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform" style={{ background: "rgba(20, 6, 31, 0.28)", color: "#ffffff" }} onClick={() => trackClick(null, platform)}>
+                  {icon}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        {customLinks.length > 0 && (
+          <div className="space-y-3 w-full">
+            {customLinks.map((link) => (
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(link.id, link.title)} className="block w-full px-6 py-[18px] rounded-lg text-center text-sm font-semibold hover:brightness-105 transition-[filter]" style={{ background: linkColor || "#ff3fd0", border: "2px solid #150622", color: "#1a0630" }}>
+                {link.title}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {featuredRepos.length > 0 && (
+          <div className="w-full space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-center">Projects</h2>
+            {featuredRepos.map((repo) => (
+              <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block w-full px-5 py-3 rounded-lg hover:brightness-105 transition-[filter]" style={{ background: "rgba(20, 6, 31, 0.3)" }}>
+                <RepoName name={repo.name} className="font-semibold" />
+                {repo.description && <p className="text-xs mt-1 opacity-80 line-clamp-2">{repo.description}</p>}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center opacity-60 text-xs mt-8">
+          <Logo />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PrismSwirlTheme({ user, customLinks, socialPlatforms, featuredRepos, handleShare, textColor, linkColor, font, bgColor, bgGradient }) {
+  // Rainbow ripple, kept translucent so a custom background still tints it.
+  const swirl = "repeating-radial-gradient(ellipse 150% 75% at 20% 10%, rgba(255, 95, 174, 0.9) 0 16px, rgba(138, 75, 255, 0.9) 16px 32px, rgba(47, 123, 255, 0.9) 32px 48px, rgba(255, 138, 63, 0.9) 48px 64px, rgba(255, 225, 77, 0.9) 64px 80px, rgba(75, 224, 200, 0.9) 80px 96px)";
+  const base = bgGradient || bgColor || "linear-gradient(160deg, #ff5fae 0%, #8a4bff 35%, #2f7bff 70%, #ff8a3f 100%)";
+
+  return (
+    <div
+      className={cn("min-h-screen flex flex-col items-center px-6 py-16", font)}
+      style={{ backgroundColor: bgColor || "#1a0f33", backgroundImage: `linear-gradient(175deg, rgba(22, 10, 40, 0.35), rgba(22, 10, 40, 0.62)), ${swirl}, ${base}`, color: textColor || "#ffffff" }}
+    >
+      <button onClick={handleShare} className="fixed top-6 right-6 w-10 h-10 rounded-full border flex items-center justify-center hover:scale-110 transition-transform" style={{ borderColor: "rgba(255, 255, 255, 0.45)", background: "rgba(22, 10, 40, 0.4)", color: "#ffffff" }}>
+        <Share2 className="w-4 h-4" />
+      </button>
+
+      <div className="w-full max-w-xl space-y-8">
+        <div className="text-center space-y-4">
+          <img src={user.image} alt={user.name} className="w-24 h-24 rounded-full mx-auto object-cover" />
+          <h1 className="text-4xl font-black tracking-tight drop-shadow-md">@{user.username}</h1>
+          {user.bio && <p className="opacity-90 drop-shadow-sm">{user.bio}</p>}
+        </div>
+
+        {/* Social icons */}
+        {socialPlatforms.some((p) => user[p]) && (
+          <div className="flex flex-wrap justify-center gap-3">
+            {socialPlatforms.map((platform) => {
+              if (!user[platform]) return null;
+              const icon = Icons[platform];
+              return (
+                <a key={platform} href={user[platform]} target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-full flex items-center justify-center hover:scale-110 transition-transform" style={{ background: "rgba(255, 255, 255, 0.28)", color: "#1b1b2e" }} onClick={() => trackClick(null, platform)}>
+                  {icon}
+                </a>
+              );
+            })}
+          </div>
+        )}
+
+        {customLinks.length > 0 && (
+          <div className="space-y-3 w-full">
+            {customLinks.map((link) => (
+              <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(link.id, link.title)} className="block w-full px-6 py-[18px] rounded-full text-center font-semibold text-[#1b1b2e] hover:brightness-105 transition-[filter]" style={{ background: linkColor || "rgba(206, 200, 226, 0.82)" }}>
+                {link.title}
+              </a>
+            ))}
+          </div>
+        )}
+
+        {featuredRepos.length > 0 && (
+          <div className="w-full space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-[0.2em] text-center drop-shadow-sm">Projects</h2>
+            {featuredRepos.map((repo) => (
+              <a key={repo.name} href={repo.html_url} target="_blank" rel="noopener noreferrer" onClick={() => trackClick(null, `GitHub: ${repo.name}`)} className="block w-full px-5 py-3 rounded-full hover:brightness-105 transition-[filter]" style={{ background: "rgba(255, 255, 255, 0.3)", color: "#1b1b2e" }}>
+                <RepoName name={repo.name} className="font-semibold" />
+                {repo.description && <p className="text-xs mt-1 opacity-70 line-clamp-2">{repo.description}</p>}
+              </a>
+            ))}
+          </div>
+        )}
+
+        <div className="text-center opacity-70 text-xs mt-8">
+          <Logo />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function PublicProfile({ user, customLinks, appearance, featuredRepos }) {
   useEffect(() => {
     trackView(user.username);
@@ -1188,6 +1572,19 @@ export default function PublicProfile({ user, customLinks, appearance, featuredR
       return <DarkLoremIpsumTheme {...themeProps} />;
     case "minim-links":
       return <MinimLinksTheme {...themeProps} />;
+    // Reference-pattern themes
+    case "lime-fade":
+      return <LimeFadeTheme {...themeProps} />;
+    case "crimson-fade":
+      return <CrimsonFadeTheme {...themeProps} />;
+    case "sage-grid":
+      return <SageGridTheme {...themeProps} />;
+    case "warm-beige":
+      return <WarmBeigeTheme {...themeProps} />;
+    case "violet-pop":
+      return <VioletPopTheme {...themeProps} />;
+    case "prism-swirl":
+      return <PrismSwirlTheme {...themeProps} />;
     default:
       return <MinimalTheme {...themeProps} />;
   }
