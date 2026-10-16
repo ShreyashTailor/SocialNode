@@ -14,15 +14,22 @@ import {
 
 export function ModeToggle() {
   const { setTheme, resolvedTheme } = useTheme();
+  const [mounted, setMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setMounted(true);
+  }, []);
+
+  const theme = mounted ? resolvedTheme : "light";
 
   return (
     <Button
       size="icon"
       className="h-9 w-9"
       variant="outline"
-      onClick={() => setTheme(resolvedTheme === "light" ? "dark" : "light")}
+      onClick={() => setTheme(theme === "light" ? "dark" : "light")}
     >
-      {resolvedTheme === "light" ? (
+      {theme === "light" ? (
         <Moon className="!h-4 !w-4" />
       ) : (
         <Sun className="!h-4 !w-4" />
